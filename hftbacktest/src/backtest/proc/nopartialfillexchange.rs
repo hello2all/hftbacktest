@@ -1,7 +1,7 @@
 use std::{
     cell::RefCell,
     cmp::Ordering,
-    collections::{HashMap, HashSet},
+    collections::{BTreeMap, BTreeSet, HashMap},
     rc::Rc,
 };
 
@@ -70,10 +70,14 @@ where
     FM: FeeModel,
 {
     // key: order_id, value: Order<Q>
-    orders: Rc<RefCell<HashMap<OrderId, Order>>>,
+    // BTreeMap/BTreeSet rather than HashMap/HashSet for the collections that are iterated, so that orders
+    // filled by the same event are processed, and their responses queued, in a fixed order instead of the
+    // per-process random hash order. This makes backtests reproducible. The outer price maps are only
+    // accessed by key, so they stay HashMaps.
+    orders: Rc<RefCell<BTreeMap<OrderId, Order>>>,
     // key: order's price tick, value: order_ids
-    buy_orders: HashMap<i64, HashSet<OrderId>>,
-    sell_orders: HashMap<i64, HashSet<OrderId>>,
+    buy_orders: HashMap<i64, BTreeSet<OrderId>>,
+    sell_orders: HashMap<i64, BTreeSet<OrderId>>,
 
     order_e2l: ExchToLocal<LM>,
 
