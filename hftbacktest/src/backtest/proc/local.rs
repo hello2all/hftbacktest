@@ -98,8 +98,12 @@ where
                 wait_resp_order_received = true;
             }
 
-            // Processes receiving order response.
-            if order.status == Status::Filled {
+            // Processes receiving order response. A partial fill is an execution as well. A
+            // rejected request carries the order as it was known locally, including the quantity
+            // of its last execution, which has already been applied.
+            if (order.status == Status::Filled || order.status == Status::PartiallyFilled)
+                && order.req != Status::Rejected
+            {
                 self.state.apply_fill(&order);
             }
             // Applies the received order response to the local orders.
