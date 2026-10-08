@@ -257,7 +257,12 @@ where
             if prev_best_tick == INVALID_MIN
                 || (orders_borrowed.len() as i64) < new_best_tick - prev_best_tick
             {
-                for (_, order) in orders_borrowed.iter_mut() {
+                // In price order, then by order id: the fill responses are queued in this order, and
+                // their delivery times are clamped to be monotonic, so the order must not depend on
+                // how the strategy numbers its orders.
+                let mut by_price: Vec<_> = orders_borrowed.values_mut().collect();
+                by_price.sort_by_key(|order| (order.price_tick, order.order_id));
+                for order in by_price {
                     if order.side == Side::Sell && order.price_tick <= new_best_tick {
                         self.filled_orders.push(order.order_id);
                         self.fill::<true>(order, timestamp, true, order.price_tick)?;
@@ -293,7 +298,12 @@ where
             if prev_best_tick == INVALID_MAX
                 || (orders_borrowed.len() as i64) < prev_best_tick - new_best_tick
             {
-                for (_, order) in orders_borrowed.iter_mut() {
+                // In price order, then by order id: the fill responses are queued in this order, and
+                // their delivery times are clamped to be monotonic, so the order must not depend on
+                // how the strategy numbers its orders.
+                let mut by_price: Vec<_> = orders_borrowed.values_mut().collect();
+                by_price.sort_by_key(|order| (order.price_tick, order.order_id));
+                for order in by_price {
                     if order.side == Side::Buy && order.price_tick >= new_best_tick {
                         self.filled_orders.push(order.order_id);
                         self.fill::<true>(order, timestamp, true, order.price_tick)?;
@@ -562,7 +572,12 @@ where
                 if self.depth.best_bid_tick() == INVALID_MIN
                     || (orders_borrowed.len() as i64) < price_tick - self.depth.best_bid_tick()
                 {
-                    for (_, order) in orders_borrowed.iter_mut() {
+                    // In price order, then by order id: the fill responses are queued in this order, and
+                    // their delivery times are clamped to be monotonic, so the order must not depend on
+                    // how the strategy numbers its orders.
+                    let mut by_price: Vec<_> = orders_borrowed.values_mut().collect();
+                    by_price.sort_by_key(|order| (order.price_tick, order.order_id));
+                    for order in by_price {
                         if order.side == Side::Sell {
                             self.check_if_sell_filled(order, price_tick, qty, event.exch_ts)?;
                         }
@@ -588,7 +603,12 @@ where
                 if self.depth.best_ask_tick() == INVALID_MAX
                     || (orders_borrowed.len() as i64) < self.depth.best_ask_tick() - price_tick
                 {
-                    for (_, order) in orders_borrowed.iter_mut() {
+                    // In price order, then by order id: the fill responses are queued in this order, and
+                    // their delivery times are clamped to be monotonic, so the order must not depend on
+                    // how the strategy numbers its orders.
+                    let mut by_price: Vec<_> = orders_borrowed.values_mut().collect();
+                    by_price.sort_by_key(|order| (order.price_tick, order.order_id));
+                    for order in by_price {
                         if order.side == Side::Buy {
                             self.check_if_buy_filled(order, price_tick, qty, event.exch_ts)?;
                         }
